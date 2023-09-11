@@ -6,14 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id();
-            $table->string('',50);
+            $table->string('name',50);
+            $table->boolean('gender')->default(0);
+            $table->date('birthdate');
+            $table->smallInteger('status')->comment('StudentStatusEnum')->index();
+            $table->foreignId('course_id')->constrained();
             $table->timestamps();
         });
     }

@@ -7,20 +7,9 @@
 @endpush
 @section('content')
     <div class="card">
-        @if ($errors->any())
-            <div class="card-header">
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        @endif
         <div class="card-body">
 
-            <a class="btn btn-success" href="{{ route('course.create') }}">
+            <a class="btn btn-success" href="{{ route('student.create') }}">
                 Thêm
             </a>
 {{--            <caption>--}}
@@ -30,19 +19,31 @@
 {{--                </form>--}}
 {{--            </caption>--}}
             <div class="form-group">
-                <select id="select-name"></select>
+                <select id="select-course-name"></select>
+            </div>
+            <div class="form-group">
+                <select id="select-status-name" class="form-control">
+                    <option value="all">Tất cả</option>
+                    @foreach($arrStudentStatus as $option => $value)
+                        <option value="{{ $value }}">
+                            {{ $option }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
             <table class="table table-striped" id="table-index">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Tên lớp</th>
-                        <th>Số lượng học viên</th>
-                        <th>Ngày tạo</th>
+                        <th>Tên</th>
+                        <th>Giới tính</th>
+                        <th>Ngày sinh</th>
+                        <th>Tuổi</th>
+                        <th>Tình trạng</th>
+                        <th>Avatar</th>
+                        <th>Lớp</th>
                         <th>Sửa</th>
-                        @if(checkSuperAdmin())
                         <th>Xóa</th>
-                        @endif
                     </tr>
                 </thead>
 
@@ -58,7 +59,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(function(){
-            $("#select-name").select2({
+            $("#select-course-name").select2({
                 ajax: {
                      url: "{{ route('course.api.name') }}",
                      dataType: 'json',
@@ -86,7 +87,7 @@
                 }
             };
             let table = $('#table-index').DataTable({
-                dom: 'Blrtip',
+                dom: 'Blrftip',
                 select: true,
                 buttons: [
                     $.extend( true, {}, buttonCommon, {
@@ -106,31 +107,45 @@
                     }),
                     'colvis'
                 ],
-                lengthMenu: [10 , 20, 30, 40, 50],
+                lengthMenu: [20, 30, 40, 50, 100],
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('course.api') }}',
+                ajax: '{{ route('student.api') }}',
                 columnDefs: [
                     { className: "not-export", "targets": [3]}
                 ],
                 columns: [
                     {data: 'id', name: 'id'},
                     {data: 'name', name: 'name'},
-                    {data: 'student_count', name: 'student_number'},
-                    {data: 'created_at', name: 'created_at'},
+                    {data: 'gender', name: 'gender'},
+                    {data: 'birthdate',name: 'birthdate'},
+                    {data: 'age', name: 'age'},
+                    {data: 'status', name: 'status'},
+                    {
+                        data: 'avatar',
+                        targets: 6,
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row, meta) {
+                            if(!data){
+                                return '';
+                            }
+                            return `<img src="{{ public_path() }}/${data}">`
+                        }
+                    },
+                    {data: 'course_name', name: 'course_name'},
                     {
                         data: 'edit',
-                        targets: 3,
+                        targets: 8,
                         orderable: false,
                         searchable: false,
                         render: function (data, type, row, meta) {
                             return `<a class="btn btn-primary" href="${data}">Sửa</a>`;
                             }
                     },
-                    @if(checkSuperAdmin())
                     {
                         data: 'destroy',
-                        targets: 4,
+                        targets: 9,
                         orderable: false,
                         searchable: false,
                         render: function (data, type, row, meta) {
@@ -141,12 +156,20 @@
                                     </form>`;
                             }
                     },
-                    @endif
                 ]
             });
-            $('#select-name').change(function () {
-                table.columns(0).search( this.value ).draw();
-            } );
+            $('#select-course-name').change(function () {
+                table.column(7).search( $(this).val() ).draw();
+            });
+            $('#select-status-name').change(function () {
+                let value =  $(this).val();
+                // if(value === "all") {
+                //     table.column(5).search( '' ).draw();
+                // }else {
+                //     table.column(5).search(value).draw();
+                // } front-end xu ly
+                table.column(5).search(value).draw();
+            });
             $(document).on('click','.btn-delete', function(){
                 let row = $(this).parents('tr');
                 let form = $(this).parents('form');
